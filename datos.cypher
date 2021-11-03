@@ -1,22 +1,3 @@
-# Neo4j
-Trabajo práctico para la materia grandes volúmenes de datos
-
-# Introducción
-En este repositorio se encuentra la solución a la guía de ejercicios sobre Neo4j propuesta por la cátedra.
-
-# Prerequisitos
-- Para correr el modelo se utilizó [Neo4j Sandbox](https://https://sandbox.neo4j.com/)
-
-
-
-## Carga de nodos
-
-En el archivo [datos.cypher](datos.cypher) se puede encontrar el código `cypher`
-que se utilizó para la carga de los nodos y relaciones.
-
-1. Ejecutar el siguiente fragmento de código
-
-```cypher
 // Comandos en Cypher para crear nodos y relaciones de materias y alumnos
 // Para el motor neo4j 
 
@@ -50,17 +31,7 @@ CREATE ( P4: Profesor { nombre: 'Sergio', apellido: 'Blanquer', dni: '12345678'}
 CREATE ( P5: Profesor { nombre: 'Antonio', apellido: 'Cuella', dni: '87654321'});
 CREATE ( P6: Profesor { nombre: 'Carlos', apellido: 'Alanes', dni: '87654321'});
 CREATE ( P7: Profesor { nombre: 'Fernando', apellido: 'Castelao', dni: '12345124'});
-```
-2. Se puede visualizar los nodos creados utilizando
-```cypher
-MATCH (n) RETURN n
-```
-![](img/modelo.png)
 
-## Carga de relaciones
-1. Para cargar las relaciones se utiliza el siguiente código:
-
-```cypher
 //Creación de relaciones DICTO (docentes)
 
 MATCH (P2: Profesor { apellido:"Bustos"}), (TR: Materia { codigo: "TR"} ) CREATE (P2)-[:DICTO{anio: 2016, semestre: 1}]->(TR);
@@ -299,102 +270,3 @@ MATCH(P1: Profesor { apellido: "Castelao"}), (P3: Profesor { apellido: "Blanquer
 MATCH(P1: Profesor { apellido: "Castelao"}), (P4: Profesor { apellido: "Marquez"}) CREATE (P1)-[:CONOCE_A]->(P4);
 MATCH(P1: Profesor { apellido: "Castelao"}), (P5: Profesor { apellido: "Cuella"}) CREATE (P1)-[:CONOCE_A]->(P5);
 
-```
-
-
-# Consultas requeridas
-
-## 1. Listado de alumnos que cursaron la misma materia, pero en esta materia son de distintos grupos
-```cypher
-MATCH (a:Alumno)-[ac:CURSA]->()<-[bc:CURSA]-(b:Alumno)
-WHERE ac.grupo <> bc.grupo
-RETURN DISTINCT a.nombre, a.apellido, b.nombre, b.apellido;
-```
-Resultado:
-![](img/1.png)
-
-## 2. Listado de personas que dictaron más de una materia
-```cypher
-MATCH (p:Profesor)-[d:DICTO]->()
-WITH p, count(d) AS cnt
-WHERE cnt > 1
-RETURN p;
-```
-Resultado:
-![](img/2.png)
-
-## 3. Calculo de mi promedio (Asumo que soy alumno Perin)
-```cypher
-MATCH (p:Alumno)-[c:CURSA]->()
-WHERE p.apellido = "Perin"
-RETURN avg(c.calificacion);
-```
-Resultado:
-![](img/3.png)
-
-## 4. Recomendación de personas que cursaron juntas pero no se conocen
-```cypher
-MATCH (a:Alumno)-[ac:CURSA]->()<-[bc:CURSA]-(b:Alumno)
-WHERE ac.anio = bc.anio 
-AND ac.semestre = bc.semestre
-AND NOT (a)-[:CONOCE_A]-(b)
-RETURN DISTINCT a.apellido, b.apellido;
-```
-Resultado:
-![](img/4.png)
-
-## 5.1. Conocidos de mis conocidos hasta longitud 2
-```cypher
-MATCH (a:Profesor)-[s:CONOCE_A*..2]->(b)
-WHERE a.apellido = "Bustos"
-RETURN DISTINCT a,b;
-```
-Resultado:
-![](img/5.png)
-
-## 6. Alumnos que también son docentes (dictaron y cursaron materias)
-```cypher
-MATCH (p:Profesor)-[d:DICTO]->()
-WITH p, count(d) AS cntd
-WHERE cntd > 0
-MATCH (p)-[c:CURSA]->()
-WITH p, count(c) AS cntc
-WHERE cntc > 0
-RETURN p;
-```
-
-## 7. Dado un alumno en particular, se quiere obtener el listado de materias electivas que no haya cursado, en base al criterio de haber sido cursadas por otros alumnos que cursaron por lo menos una en común con él:
-```cypher
-MATCH (a:Alumno)-[ac:CURSA]-(am:Materia), (b:Alumno)-[bc:CURSA]-(bm:Materia)
-WHERE a.apellido = "Perin"
-AND NOT EXISTS ((a:Alumno)-[:CURSA]-(bm:Materia))
-AND ac.semestre = bc.semestre
-AND bm.electiva = true
-RETURN bm.nombre;
-```
-Resultado:
-![](img/7.png)
-
-## 8. Materias optativas que no he cursado y que curso alguien con quien yo he cursado y es conocido directo o indirecto
-```cypher
-MATCH (a:Alumno)-[ac:CURSA]-(am:Materia), (b:Alumno)-[bc:CURSA]-(bm:Materia)
-WHERE a.apellido = "JARA"
-AND NOT EXISTS ((a:Alumno)-[:CURSA]-(bm:Materia))
-AND ac.semestre = bc.semestre
-AND bm.electiva = true
-AND EXISTS ((a:Alumno)-[:CONOCE_A*..]-(b:Alumno))
-RETURN DISTINCT bm.nombre;
-```
-Resultado:
-![](img/8.png)
-
-## 9. Lista de alumnos que les falta alguna calificación
-A continuación se presenta una consulta capaz de detectar si hay alumnos que no han sido calificados
-en alguna materia
-```cypher
-MATCH (p:Alumno)-[c:CURSA]-(m:Materia) 
-WHERE NOT EXISTS (c.calificacion)
-RETURN p.apellido, m.nombre, c.anio, c.semestre
-```
-Resultado:
-![](img/8.png)
