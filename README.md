@@ -397,4 +397,4 @@ WHERE NOT EXISTS (c.calificacion)
 RETURN p.apellido, m.nombre, c.anio, c.semestre
 ```
 Resultado:
-![](img/8.png)
+![](img/9.png)
